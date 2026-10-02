@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ops Tracker · Process map</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235852d8'/%3E%3Ctext x='16' y='21' font-size='13' font-family='sans-serif' font-weight='700' text-anchor='middle' fill='white'%3EOT%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="bar">
+  <div class="brand"><span class="mark">OT</span><b>Ops Tracker</b><span class="sep"></span><span class="sub">Process map</span></div>
+  <div class="tools">
+    <button data-act="out" title="Zoom out">−</button>
+    <button data-act="in" title="Zoom in">+</button>
+    <button data-act="all">Fit all</button>
+    <button data-act="manual">Manual</button>
+    <button data-act="auto">Automated</button>
+    <button data-act="glossary">Glossary</button>
+    <span class="sep"></span>
+    <span class="lbl">Stage</span>
+    <span id="stages"></span>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<main id="view">
+  <div id="world">
+    <svg id="edges" width="1" height="1"></svg>
+    <div id="nodes"></div>
+    <svg id="labels" width="1" height="1"></svg>
+  </div>
+  <div id="legend"></div>
+  <div id="hint">Drag to pan · scroll to zoom · click a node or arrow for details</div>
+</main>
+
+<aside id="panel" hidden></aside>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

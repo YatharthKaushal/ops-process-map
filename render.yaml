@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: ops-tracker-process-map
+    runtime: static
+    staticPublishPath: .
+    pullRequestPreviewsEnabled: false
+    headers:
+      - path: /*
+        name: X-Robots-Tag
+        value: noindex, nofollow
+      - path: /fonts/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
