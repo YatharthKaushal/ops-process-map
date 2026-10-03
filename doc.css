@@ -53,3 +53,16 @@ tr:last-child td { border-bottom: 0; }
 nav a { position: relative; transition: background .12s, color .12s; }
 nav a.active { background: rgb(var(--accent-soft)); color: rgb(var(--accent-fg)); font-weight: 570; }
 nav a.active::before { content: ''; position: absolute; left: 0; top: 5px; bottom: 5px; width: 3px; border-radius: 2px; background: rgb(var(--accent)); }
+
+/* collapsible groups */
+nav .gh { display: flex; align-items: flex-start; gap: 2px; margin-top: 6px; }
+nav .tg { flex: none; width: 22px; height: 26px; padding: 0; border: 0; background: none; color: rgb(var(--fg-subtle)); display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 6px; }
+nav button.tg:hover { background: rgb(var(--sunken)); color: rgb(var(--fg)); }
+nav .tg svg { transition: transform .2s; }
+nav .grp.open .tg svg { transform: rotate(90deg); }
+nav a.l2 { flex: 1; margin-top: 0; }
+nav a.l3 { margin-left: 24px; padding-left: 10px; border-left: 1px solid rgb(var(--line)); border-radius: 0 6px 6px 0; }
+nav a.l3.active::before { left: -1px; }
+nav .subs { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .22s ease; }
+nav .subs > div { overflow: hidden; min-height: 0; }
+nav .grp.open .subs { grid-template-rows: 1fr; }
