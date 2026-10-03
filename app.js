@@ -221,8 +221,12 @@
   var drag = null, moved = false;
   view.addEventListener('pointerdown', function (e) {
     if (e.button !== 0) return;
+    e.preventDefault();
     drag = { x: e.clientX, y: e.clientY, tx: T.x, ty: T.y }; moved = false;
+    try { view.setPointerCapture(e.pointerId); } catch (x) {}
   });
+  view.addEventListener('dragstart', function (e) { e.preventDefault(); });
+  document.addEventListener('selectstart', function (e) { if (drag || !e.target.closest || !e.target.closest('#panel')) e.preventDefault(); });
   window.addEventListener('pointermove', function (e) {
     if (!drag) return;
     var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
@@ -230,6 +234,8 @@
     if (moved) { T.x = drag.tx + dx; T.y = drag.ty + dy; apply(); }
   });
   window.addEventListener('pointerup', function () { drag = null; view.classList.remove('drag'); });
+  window.addEventListener('pointercancel', function () { drag = null; view.classList.remove('drag'); });
+  window.addEventListener('blur', function () { drag = null; view.classList.remove('drag'); });
   view.addEventListener('wheel', function (e) {
     e.preventDefault();
     var r = view.getBoundingClientRect();
