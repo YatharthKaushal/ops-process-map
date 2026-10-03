@@ -17,3 +17,7 @@ The site root is this folder. There is nothing to build.
 
 Both serve over HTTPS with a free URL and add a `noindex` header. The page names real customers, vendors and
 client sheet names, so treat the URL as private: share it only with the people who need it.
+
+## Document page
+`doc.html` is a read-only rendering of `docs/automation-suggestions.md` (the raw markdown is not hosted).
+Regenerate after editing the markdown: `python docs/build_doc_page.py` (run from the repo that holds `docs/`).

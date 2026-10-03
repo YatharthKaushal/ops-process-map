@@ -283,11 +283,60 @@
   var TYPE_NAME = { feature: 'Product feature (screen)', trigger: 'Start / end / event', action: 'Manual operation', doc: 'Human edits a tracking doc', decision: 'Decision', external: 'External party', gap: 'Tracking gap', auto: 'Automated operation', approve: 'Human in the loop', store: 'Document / table' };
   function nodeLink(id) { return '<button class="link" data-go="' + esc(id) + '">' + esc(byId[id].label) + '</button>'; }
   function edgeLink(e, other) { return '<button class="link" data-edge="' + esc(e.id) + '">' + (e.label ? '<b>' + esc(e.label) + '</b> · ' : '') + esc(byId[other].label) + '</button>'; }
+  var ROLE = {
+    trigger: 'Marks where a flow starts, ends or is set off by an event.',
+    action: 'A manual step carried out by a person. It does not touch a tracking document.',
+    doc: 'A manual step where a person has to add, edit or update a tracking document by hand.',
+    external: 'A party outside the company. The flow waits on them.',
+    gap: 'A step that happens, or should, but is recorded nowhere.',
+    auto: 'An operation the system performs on its own, with no one typing.',
+    approve: 'A checkpoint where a person confirms, scans or approves. The system does the rest.',
+    store: 'Where the data lives: one sheet or table.',
+    feature: 'A screen people open to see or act on the data.'
+  };
+  function outTargets(n) {
+    return edges.filter(function (e) { return e.from === n.id; }).map(function (e) { return (e.label ? e.label + ' → ' : '') + byId[e.to].label; });
+  }
+  function respText(n) {
+    var o = outTargets(n), who = n.actor || 'Not assigned', nxt = o.length ? ' Hands over to: ' + o.join('; ') + '.' : '';
+    switch (n.type) {
+      case 'decision': return (n.section === 'manual' ? who + ' decides' : 'The system decides, by rule,') + ' where the flow goes: ' + (o.join('; ') || 'end of flow') + '.';
+      case 'doc': return who + ' must keep ' + (storeLabel[n.touch.doc] || 'the sheet') + ' correct by hand: ' + n.touch.fields.join(', ') + '.' + nxt;
+      case 'approve': return who + ' confirms or corrects (' + n.touch.fields.join(', ') + ').' + nxt;
+      case 'auto': return 'Runs without a person.' + nxt;
+      case 'action': return who + ' carries this out.' + nxt;
+      case 'gap': return 'Nobody owns this today. That is the problem.' + nxt;
+      case 'external': return who + ' is responsible. We only control our side of the handoff.' + nxt;
+      case 'trigger': return 'No owner: it is an event.' + nxt;
+      case 'store': var w = nodes.filter(function (m) { return m.touch && m.touch.doc === n.id; }).length; return w + ' step' + (w === 1 ? '' : 's') + ' write to it' + (n.section === 'manual' ? ', all by hand.' : '.');
+      case 'feature': return 'Gives ' + n.users.length + ' step' + (n.users.length === 1 ? '' : 's') + ' of the automated flow one place to be seen and acted on.';
+    }
+    return who;
+  }
+  function roleBlock(n) {
+    var role = n.type === 'decision' ? (n.section === 'manual' ? 'A judgement call made by a person, usually by eye.' : 'A rule the system applies, so nobody has to judge it.') : ROLE[n.type];
+    return '<h3>Role</h3><p>' + esc(role) + '</p><h3>Purpose</h3><p>' + esc(n.summary || '') + '</p><h3>Responsibility</h3><p>' + esc(respText(n)) + '</p>';
+  }
+  function solvesBlock(n) {
+    if (n.section !== 'auto' || ['auto', 'approve', 'decision', 'feature'].indexOf(n.type) < 0) return '';
+    var h = '<h3>What this solves vs manual</h3><div class="box solves">';
+    if (n.type === 'feature') h += '<b>Manual today:</b> ' + esc(n.why);
+    else {
+      var rep = (n.replaces || []).map(function (r) { return byId[r]; }).filter(function (m) { return m && m.type !== 'store'; });
+      if (!rep.length) h += '<b>New capability.</b> Nothing in the manual flow does this today.';
+      else h += '<ul>' + rep.map(function (m) {
+        var pn = (m.pains || []).map(function (q) { return '<span class="b bad">' + q + '</span> ' + esc(P.pains[q]); }).join('<br>');
+        return '<li><b>Manual:</b> ' + nodeLink(m.id) + ' — ' + esc(m.summary || '') +
+          (m.touch ? '<br><b>Typing removed:</b> hand-editing of ' + esc(storeLabel[m.touch.doc]) + '.' : '') + (pn ? '<br>' + pn : '') + '</li>';
+      }).join('') + '</ul>';
+    }
+    return h + '</div>';
+  }
   function nodePanel(n) {
     var h = '<button class="x" data-close>×</button><div class="badges">' +
       '<span class="b ' + (n.section === 'manual' ? 'warn' : 'acc') + '">' + (n.section === 'manual' ? 'Manual' : 'Automated') + '</span>' +
       '<span class="b">' + esc(TYPE_NAME[n.type]) + '</span>' + (n.assumed ? '<span class="b bad">Assumed</span>' : '') + '</div>';
-    h += '<h2>' + esc(n.label) + '</h2><p>' + esc(n.summary || '') + '</p>';
+    h += '<h2>' + esc(n.label) + '</h2>' + roleBlock(n) + solvesBlock(n);
     if (n.assumed) h += '<div class="box assumed">Not shown in any file the client shared. Drawn from how similar shops work; confirm with the client.</div>';
     h += '<dl class="kv"><dt>Who</dt><dd>' + esc(n.actor || '') + '</dd><dt>Stage</dt><dd>' + (n.stage + 1) + ' · ' + esc(P.stages[n.stage].label) + '</dd><dt>Lane</dt><dd>' + esc(P.lanes[n.lane]) + '</dd>' +
       (n.evidence ? '<dt>Evidence</dt><dd>' + esc(n.evidence) + '</dd>' : '') + '</dl>';

@@ -1,0 +1,1346 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Automation Opportunities — Client Reference Docs Review · Ops Tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235852d8'/%3E%3Ctext x='16' y='21' font-size='13' font-family='sans-serif' font-weight='700' text-anchor='middle' fill='white'%3EOT%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="doc.css">
+</head><body>
+<header><a class="back" href="index.html">← Process map</a><span class="sep"></span><b>Ops Tracker</b><span class="sub">Automation &amp; feature opportunities</span></header>
+<div class="wrap">
+<nav><a class="l2" href="#1-executive-summary">1. Executive summary</a><a class="l3" href="#top-10-recommendations-ranked-by-value-effort">Top 10 recommendations (ranked by value ÷ effort)</a><a class="l2" href="#2-what-we-reviewed">2. What we reviewed</a><a class="l2" href="#3-how-the-client-works-today-inferred">3. How the client works today (inferred)</a><a class="l2" href="#4-data-quality-findings-why-automation-is-needed">4. Data-quality findings (why automation is needed)</a><a class="l2" href="#5-automation-catalogue">5. Automation catalogue</a><a class="l3" href="#50-summary-table">5.0 Summary table</a><a class="l3" href="#5a-sales-orders-dispatch">5.A Sales orders &amp; dispatch</a><a class="l3" href="#5b-purchase-vendors">5.B Purchase &amp; vendors</a><a class="l3" href="#5c-stores-inventory">5.C Stores &amp; inventory</a><a class="l3" href="#5d-job-work-gst-compliance">5.D Job work &amp; GST compliance</a><a class="l3" href="#5e-product-master-engineering">5.E Product master &amp; engineering</a><a class="l3" href="#5f-costing-pricing">5.F Costing &amp; pricing</a><a class="l3" href="#5g-maintenance">5.G Maintenance</a><a class="l3" href="#5h-masters-feeding-the-scheduler">5.H Masters feeding the scheduler</a><a class="l3" href="#5i-production-execution-ops-tracker-core">5.I Production execution (Ops Tracker core)</a><a class="l3" href="#5j-reporting-control-platform">5.J Reporting, control &amp; platform</a><a class="l3" href="#5k-enablers">5.K Enablers</a><a class="l2" href="#6-product-features-beyond-automation">6. Product features beyond automation</a><a class="l3" href="#6a-visibility-dashboards-and-views">6.A Visibility: dashboards and views</a><a class="l3" href="#6b-planning-tools">6.B Planning tools</a><a class="l3" href="#6c-costing-and-pricing-workbench">6.C Costing and pricing workbench</a><a class="l3" href="#6d-customer-and-vendor-portals">6.D Customer and vendor portals</a><a class="l3" href="#6e-product-master-and-documents">6.E Product master and documents</a><a class="l3" href="#6f-quality">6.F Quality</a><a class="l3" href="#6g-maintenance-and-assets">6.G Maintenance and assets</a><a class="l3" href="#6h-compliance-and-finance-views">6.H Compliance and finance views</a><a class="l3" href="#6i-everyday-usability">6.I Everyday usability</a><a class="l3" href="#suggested-pitch-order">Suggested pitch order</a><a class="l2" href="#7-suggested-roadmap">7. Suggested roadmap</a><a class="l2" href="#8-mapping-to-the-ops-tracker-domain-model">8. Mapping to the Ops Tracker domain model</a><a class="l2" href="#9-open-questions-for-the-client">9. Open questions for the client</a></nav>
+<main>
+<h1>Automation Opportunities — Client Reference Docs Review</h1>
+
+<p><strong>Date:</strong> 2026-10-01 · <strong>Source:</strong> <code>docs/reference-docs-shared-by-client/</code> (9 ERP screenshots, 5 product-master screenshots, 4 Excel workbooks)
+<strong>Purpose:</strong> list every automation we can offer the client, backed by evidence from their own files, and show how each one connects to the Ops Tracker (PPC) build.</p>
+<hr />
+<h2 id="1-executive-summary">1. Executive summary</h2>
+<p>The client runs the whole business on a <strong>Google Sheets "ERP"</strong> with tabs <code>STATUS · INV/PUR · ORDERS · CHALLAN · COP · IN/OUT · VSR · COP HISTORY · MASTER</code>. Next to it sit <strong>Google Forms</strong> for the machine master and breakdown log, plus <strong>per-item costing sheets</strong> that pull rates from a central rate sheet through <code>IMPORTRANGE</code>. Scripts and buttons already exist ("UPDATE ALL", "Update Stock", "SUBMIT"), so the team is comfortable with automation. The sheets have simply hit their limits.</p>
+<p><strong>What we found in their files:</strong></p>
+<ul>
+<li><strong>Status text is typed by hand and goes stale.</strong> Order lines show "IN STOCK" while net stock is 5 against a balance of 200.</li>
+<li><strong>Formulas are broken or wrong.</strong> <code>#VALUE!</code>, <code>#ERROR!</code>, <code>#DIV/0!</code> and <code>#REF!</code> all appear on live sheets. The MV9650 costing omits one operation from its total, so cost is understated by about 17%.</li>
+<li><strong>Stock cannot be trusted.</strong> Stock is clamped at 0, carry-forward goes negative, and in-house production is never booked into stock (for example, M1751 has 28,722 pcs outward against 6 pcs inward).</li>
+<li><strong>Vendors are chased by hand.</strong> Some POs are 368 days old and still open, and emails go out only for over-receipt.</li>
+<li><strong>Breakdowns are logged after the fact,</strong> in one case 10 days after repair. Downtime never reaches planning: 19 breakdowns cost 446 h of wall-clock downtime and ₹79,684 between May and Sep 2026.</li>
+<li><strong>Nothing connects orders → castings → machines → schedule → dispatch.</strong> This is the gap Ops Tracker fills.</li>
+</ul>
+<h3 id="top-10-recommendations-ranked-by-value-effort">Top 10 recommendations (ranked by value ÷ effort)</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Rank</th>
+<th>Automation</th>
+<th>Why it ranks here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>A1 · Order release → production bucket → auto-schedule</strong></td>
+<td>The core of Ops Tracker; replaces the "Tick for mfg" checkbox and the hand-typed "projected date"</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>A3 · Auto order status + dispatch-ready list</strong></td>
+<td>Fixes contradictory "IN STOCK" flags; dispatch decisions rest on these flags</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>G1 · Real-time breakdown → machine DOWN → reschedule</strong></td>
+<td>446 h of downtime per 4.5 months that planning cannot see today</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>F1 · Costing engine from one routing master</strong></td>
+<td>Found a live formula bug that understates cost by about 17% (margin looks like 32% but is really about 18%)</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>B1 · Vendor PO follow-up + escalation</strong></td>
+<td>POs up to 368 days overdue with no reminder sent</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>C1 + C2 · Derived stock ledger + production booking</strong></td>
+<td>Every "net stock" figure downstream depends on this</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>B5 · Casting requirement planning (MRP-lite)</strong></td>
+<td>Castings gate production; today they are ordered from free-text notes</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>D1 + D2 · Job-work reconciliation + auto challan + ITC-04 data</strong></td>
+<td>GST compliance risk plus material sitting at job workers untracked</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>G3 · Preventive maintenance plan from breakdown history</strong></td>
+<td>APC battery failed 4 times, CNC001(jyoti) failed 5 times</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>F3 · Margin monitor per order line</strong></td>
+<td>Pricing decisions are made without true cost</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="2-what-we-reviewed">2. What we reviewed</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>File</th>
+<th>What it is</th>
+<th>Key observations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>erp/image.png</code></td>
+<td>Inventory transaction log (IN/OUT style)</td>
+<td>Job-work challans out/in to the shot-blasting vendor for M1116 Trunnion Assembly; rejects to foundries; recorded weight vs avg RM weight; total weight 0 on inward rows; date typos (<code>13/1/21</code> among Nov-2024 rows, <code>23/1/2/24</code>)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>erp/image (1).png</code></td>
+<td><strong>ORDERS</strong> tab (customer POs)</td>
+<td>PO, item, qty, req date, <em>Tick for mfg</em>, marks, HSN, GST, balance, SP, multiple dispatch invoice refs, hand-typed stock/projected status, order value, net stock, COP price key, currency, FX rate, lock date</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>erp/image (1) (1).png</code></td>
+<td><strong>INV/PUR</strong> tab (sale/purchase ledger, ~8,000 rows since 2018)</td>
+<td>"Incoming RM by [clerk]" / "Outgoing invoice by [clerk]"; <code>INWARD EXCEEDS ORDER</code>; ingredients <code>ARRAYFORMULA</code>; manual "type <em>ok</em> once approved by Purchase/EA"; <strong>every visible row = <code>PRICE NOT FOUND</code></strong>; <code>#VALUE!</code>/<code>#ERROR!</code> in headers</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>erp/image (2).png</code></td>
+<td>Purchase order tracker (castings/RM)</td>
+<td>Delay up to <strong>368 days</strong>; <code>ORDER PENDING</code> / <code>QTY EXCEEDS PO</code>; email sent only on over-receipt; rate in ₹/kg; "Heat code is must"</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>erp/image (3).png</code></td>
+<td>Generated <strong>Delivery Challan</strong> (Reject → J.k castings)</td>
+<td>Doc no. <code>T/26-27/01R</code>, vehicle no., time of removal, ₹/kg valuation, ₹36,301.44 taxable. <strong>Party GSTIN and Address left blank</strong></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>erp/image (4).png</code></td>
+<td><strong>Item query</strong> sheet (item 360 view)</td>
+<td>Cast/finished wt, stock carry-forward, net vs notional stock, pending customer order vs pending procurement, inward/outward/reject/scrap over 30/60/90/365/730 days, last-10 ledger, job-work section, price history; many <code>#DIV/0!</code> and <code>#VALUE!</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>erp/image (6).png</code></td>
+<td><strong>VSR</strong> — vendor supply report (J.k castings)</td>
+<td>Header shows <strong>On-time 0.0%</strong> while the metric panel shows <strong>57.1%</strong>; avg fulfilment 31.8 days, max 80; over-receipts of +5% to +9.5%; one "FULFILLED" row with blank qty ordered</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>erp/image (7).png</code></td>
+<td>Price history + weight list</td>
+<td>TMR556WB price ₹875 (2021) → ₹1,166 (2026) across customer POs; item cast wt vs net wt list</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>erp/image (8).png</code></td>
+<td><strong>Party MASTER</strong> + lookup lists</td>
+<td>Vendor/Buyer master (<code>Vendor</code>/<code>vendor</code>/<code>BUYER</code> inconsistent casing, many GSTINs blank); status list (Inward, Outward, Stock carry forward, Org/Counter sample in/out, Reject, Job challan out/in, Scrap, Quarantined); raw-material list (SG 500/7, CI 25GR, EN8, 20MnCr5, …)</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>product-master/image.png</code></td>
+<td>Item-code rules + marks list</td>
+<td>Bush = <code>X.X.XB</code> (ID.Length.OD); accessory = <code>XXXXY</code>; in-house job work = <code>JWXXX</code>; ~35 customer/OEM marks (AM=AUTOMANN, MNS, VOLVO FM460, SCANIA G500 …)</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>product-master/image (1).png</code></td>
+<td>New-product entry form</td>
+<td>Fields: product code/OE no., MPN ("<strong>check last MPN for AM &amp; MNS</strong>" by hand), HS code, GST, weights, material, finish, <em>Contains</em> (<code>Child*Qty</code>), original nos.; side calc of price-revision impact (2.81%)</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>product-master/image (2).png</code></td>
+<td><strong>Product master</strong> table</td>
+<td>MPN series per mark (BFA… = AM, BFM… = MNS); HS codes of mixed length (<code>7325</code>, <code>8716</code>, <code>8484</code> vs 8-digit); material spelled <code>SG 500/7</code> / <code>SGI 500/7</code> / <code>SG500/7</code> / <code>SG</code>; GST 5% on one auto part; Sr. No. and gross wt mostly empty</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>product-master/image (3).png</code></td>
+<td>BOM explode sheet</td>
+<td>Parent → Child raw (<code>MFL46542BB*1</code>) → parsed child, qty per parent, child stock; <strong>"Buildable Qty" column empty</strong></td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>product-master/image (4).png</code></td>
+<td>Item stock summary</td>
+<td>Pending qty / carry-forward / inward / outward / rejected / scrapped / stock. Stock floors at 0 (M1464: 285+2294−2655−53 = −129, shown as 0); carry-forward −21 on 31.16.105</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>Breakdown Report.xlsx</code></td>
+<td>Google-Form log of machine breakdowns (19 rows, May–Sep 2026)</td>
+<td>Downtime typed as text ("1 Day 23 Hours 11 Minutes"); logged up to 10 days after repair; remarks contain PM advice nobody acts on</td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>Machinery_Equipment Master.xlsx</code></td>
+<td>Google-Form machine register (36 assets)</td>
+<td><code>Operations</code> copy-pasted ("Drilling, Turning, Milling" on drills and angle grinders, "Broaching" on an air cooler); cost = 1 placeholder; production year later than installation year; warranty/spec/spares mostly blank</td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>Cost MV9650.xlsx</code></td>
+<td>Per-item costing (MV9650 Load Spring Latch)</td>
+<td>RM 0.212 kg × ₹105/kg + 4 operations (machine, jig, gauge, control spec, pcs per hours, skill rate) + paint + overhead. <strong><code>H10 = SUM(H3:H7)</code> skips op 4 (H8, ₹11.43/pc)</strong></td>
+</tr>
+<tr>
+<td>18</td>
+<td><code>MV9650 Production Plan.xlsx</code></td>
+<td>Copy of the same costing sheet</td>
+<td>Same layout and same item, but <strong>different formulas</strong> (<code>H3 = G2*J2</code> points at an empty cell; paint/overhead without ×2) and all <code>#REF!</code> (IMPORTRANGE broken)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="3-how-the-client-works-today-inferred">3. How the client works today (inferred)</h2>
+<pre><code>Customer PO (AMNJ / AMON / AM-AB export, MNS-1..7 Mumbai, SHR, GRAB …)
+   │  typed into ORDERS tab  ──► &quot;Tick for mfg&quot; checkbox (manual release)
+   ▼
+Casting / RM purchase  (PO/BA/26xx/nnn to foundries: J.k castings, Kent Malleables, KR INDS …)
+   │  tracked in PO tracker; delay = today − PO date; reminders by hand
+   ▼
+Inward (INV/PUR, &quot;Incoming RM&quot; clerk)  ──► rejects back to foundry on Delivery Challan (₹/kg)
+   ▼
+Machining in-house  (Lathe ×8, Drill ×7, CNC turning ×2, VMC ×2, HMC ×2, 5-axis ×1, VMM ×2, VTL ×1, grinders)
+   │  + Job work out (shot blasting, Rurka Sales Corp)  ──► Job challan out / inward
+   │  + Paint section (M-seal → Regmark → dip black glossy → oven)
+   │  ✗ production completion is NOT booked into stock
+   ▼
+Packing ──► Outward invoice (T/26-27/nn, &quot;Outgoing invoice&quot; clerk) ──► balance on ORDERS line reduced
+   ▼
+Reports by hand: Item query, VSR per vendor, COP / COP HISTORY, STATUS
+Side systems: Machine master form, Breakdown form, costing sheets (IMPORTRANGE to rate master)
+</code></pre>
+<hr />
+<h2 id="4-data-quality-findings-why-automation-is-needed">4. Data-quality findings (why automation is needed)</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Issue</th>
+<th>Where</th>
+<th>Example</th>
+<th>Consequence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q1</td>
+<td>Hand-typed status contradicts the numbers</td>
+<td>ORDERS</td>
+<td>MW16952 / MW16953: balance 200, net stock 5 / 6, status "IN STOCK"</td>
+<td>Wrong dispatch promises</td>
+</tr>
+<tr>
+<td>Q2</td>
+<td>Price lookup key broken</td>
+<td>INV/PUR</td>
+<td><code>COP PRICE KEY</code> = <code>PO\|Mark\|Item</code> but PO is blank → <code>\|AMNJ\|TMR8392R</code> → <code>PRICE NOT FOUND</code> on all visible rows</td>
+<td>Sale value never computed, no revenue view per item</td>
+</tr>
+<tr>
+<td>Q3</td>
+<td>Costing SUM range wrong</td>
+<td>Cost MV9650</td>
+<td><code>SUM(H3:H7)</code> excludes op 4 (₹11.43). Total ₹54.37 should be ₹65.80</td>
+<td>MV9650 sells at ₹80. Apparent margin 32%, true margin ≈ 17.75%</td>
+</tr>
+<tr>
+<td>Q4</td>
+<td>Divergent copies of one costing</td>
+<td>Cost vs Production Plan</td>
+<td>Different formulas for RM, paint and overhead in two files for the same item</td>
+<td>No single source of truth; figures depend on which file is opened</td>
+</tr>
+<tr>
+<td>Q5</td>
+<td>Wrong skill rate</td>
+<td>Cost MV9650</td>
+<td>Paint section costed at "Drill" rate</td>
+<td>Op-level cost wrong</td>
+</tr>
+<tr>
+<td>Q6</td>
+<td>Rate list polluted</td>
+<td>Costing <code>Sheet2</code> (labour list)</td>
+<td>Item codes <code>31.36.010 SR</code>, <code>FG-76</code> mixed into the skill/machine rate list</td>
+<td>Dropdowns offer junk values</td>
+</tr>
+<tr>
+<td>Q7</td>
+<td>Stock floored at 0 / negative carry-forward</td>
+<td>Stock summary</td>
+<td>M1464 true −129 shown 0; 31.16.105 carry-forward −21</td>
+<td>Hides missing inward entries</td>
+</tr>
+<tr>
+<td>Q8</td>
+<td>Production never booked to stock</td>
+<td>Stock summary, Item query</td>
+<td>M1751 outward 28,722 vs inward 6; "Production to packing last 60 days = 0"</td>
+<td>Net stock is meaningless for machined items</td>
+</tr>
+<tr>
+<td>Q9</td>
+<td>GST / HSN inconsistent</td>
+<td>ORDERS, Product master</td>
+<td>HSN 87088000 at 28% on one line and 18% on others; 4-digit HSN <code>7325</code>; 5% on a radiator fan (87089100)</td>
+<td>Invoice and tax errors</td>
+</tr>
+<tr>
+<td>Q10</td>
+<td>Impossible dates</td>
+<td>ORDERS, IN/OUT</td>
+<td>Req date 4/5/24 earlier than PO date 3/4/25; <code>23/1/2/24</code>; <code>13/1/21</code> among 2024 rows</td>
+<td>Broken ageing and delay maths</td>
+</tr>
+<tr>
+<td>Q11</td>
+<td>Over-receipt with no tolerance rule</td>
+<td>PO tracker, VSR</td>
+<td>MK17000 1,100 → 1,144; 580.264.1 250 → 271 (+8.4%); MW16953 200 → 219 (+9.5%)</td>
+<td>Paying for or stocking unplanned quantity</td>
+</tr>
+<tr>
+<td>Q12</td>
+<td>KPI formula disagrees with itself</td>
+<td>VSR</td>
+<td>Header "On-time 0.0%" vs panel "57.1%"</td>
+<td>Vendor review numbers can't be trusted</td>
+</tr>
+<tr>
+<td>Q13</td>
+<td>Master data incomplete / inconsistent</td>
+<td>Party master, Machine master</td>
+<td>Kind = <code>Vendor</code>/<code>vendor</code>/<code>BUYER</code>; GSTIN blank; challan party GSTIN/address blank; machine cost = 1; operations copy-pasted</td>
+<td>Documents print incomplete; scheduler can't use the machine data</td>
+</tr>
+<tr>
+<td>Q14</td>
+<td>Duration typed as text</td>
+<td>Breakdown log</td>
+<td>"2 Days 4 Hours 30 Minutes"</td>
+<td>No MTTR/MTBF without re-keying</td>
+</tr>
+<tr>
+<td>Q15</td>
+<td>Late reporting</td>
+<td>Breakdown log</td>
+<td>DM006 logged 10.1 days after repair; VMC001 4.1 days; VMM002 3.2 days</td>
+<td>Planning never knows a machine is down</td>
+</tr>
+<tr>
+<td>Q16</td>
+<td>Material naming drift</td>
+<td>Product master</td>
+<td><code>SG 500/7</code>, <code>SGI 500/7</code>, <code>SG500/7</code>, <code>SG</code></td>
+<td>Purchase/MRP grouping fails</td>
+</tr>
+<tr>
+<td>Q17</td>
+<td>Live formula errors</td>
+<td>Orders, INV/PUR, Item query, Production Plan</td>
+<td><code>#VALUE!</code>, <code>#ERROR!</code>, <code>#DIV/0!</code>, <code>#REF!</code></td>
+<td>Silent wrong numbers</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="5-automation-catalogue">5. Automation catalogue</h2>
+<p><strong>Effort:</strong> S ≈ under 1 week · M ≈ 1–3 weeks · L ≈ 3+ weeks (one developer, after the Ops Tracker backend core exists).
+<strong>Impact:</strong> H / M / L. <strong>Phase:</strong> see §6.</p>
+<h3 id="50-summary-table">5.0 Summary table</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Automation</th>
+<th>Module</th>
+<th>Impact</th>
+<th>Effort</th>
+<th>Phase</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1</td>
+<td>Order release → production bucket → auto-schedule</td>
+<td>Sales → PPC</td>
+<td>H</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>A2</td>
+<td>Auto-allocate dispatches to open PO lines (fix <code>PRICE NOT FOUND</code>)</td>
+<td>Sales</td>
+<td>H</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>A3</td>
+<td>Auto order status + dispatch-ready list</td>
+<td>Sales</td>
+<td>H</td>
+<td>S</td>
+<td>1</td>
+</tr>
+<tr>
+<td>A4</td>
+<td>Capable-to-promise delivery date on order entry</td>
+<td>Sales → PPC</td>
+<td>H</td>
+<td>M</td>
+<td>2</td>
+</tr>
+<tr>
+<td>A5</td>
+<td>Order validation (HSN→GST, dates, duplicates)</td>
+<td>Sales</td>
+<td>M</td>
+<td>S</td>
+<td>0</td>
+</tr>
+<tr>
+<td>A6</td>
+<td>FX rate fetch + lock for export orders</td>
+<td>Sales</td>
+<td>M</td>
+<td>S</td>
+<td>2</td>
+</tr>
+<tr>
+<td>A7</td>
+<td>Customer notifications (order ack, dispatch, delay)</td>
+<td>Sales</td>
+<td>M</td>
+<td>S</td>
+<td>2</td>
+</tr>
+<tr>
+<td>A8</td>
+<td>Short-close / balance clean-up workflow</td>
+<td>Sales</td>
+<td>L</td>
+<td>S</td>
+<td>2</td>
+</tr>
+<tr>
+<td>A9</td>
+<td>PO intake from WhatsApp / email / portal</td>
+<td>Sales</td>
+<td>H</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>B1</td>
+<td>Vendor PO follow-up + escalation ladder</td>
+<td>Purchase</td>
+<td>H</td>
+<td>S</td>
+<td>0</td>
+</tr>
+<tr>
+<td>B2</td>
+<td>Over-receipt tolerance + auto vendor email</td>
+<td>Purchase</td>
+<td>M</td>
+<td>S</td>
+<td>0</td>
+</tr>
+<tr>
+<td>B3</td>
+<td>Promised-date capture; delay vs promise, not vs PO date</td>
+<td>Purchase</td>
+<td>M</td>
+<td>S</td>
+<td>1</td>
+</tr>
+<tr>
+<td>B4</td>
+<td>Vendor scorecards for all vendors, monthly, auto-emailed</td>
+<td>Purchase</td>
+<td>H</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>B5</td>
+<td>Casting / RM requirement planning (MRP-lite) → draft POs</td>
+<td>Purchase → PPC</td>
+<td>H</td>
+<td>L</td>
+<td>2</td>
+</tr>
+<tr>
+<td>B6</td>
+<td>Casting ₹/kg trend watch → cost re-run</td>
+<td>Purchase → Costing</td>
+<td>M</td>
+<td>S</td>
+<td>2</td>
+</tr>
+<tr>
+<td>B7</td>
+<td>Purchase approval workflow</td>
+<td>Purchase</td>
+<td>M</td>
+<td>S</td>
+<td>1</td>
+</tr>
+<tr>
+<td>B8</td>
+<td>Material-ready date gates job release in scheduler</td>
+<td>Purchase → PPC</td>
+<td>H</td>
+<td>M</td>
+<td>2</td>
+</tr>
+<tr>
+<td>C1</td>
+<td>Single transaction ledger with derived stock (negatives flagged)</td>
+<td>Stores</td>
+<td>H</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>Shop-floor production booking → FG stock</td>
+<td>Stores ↔ PPC</td>
+<td>H</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>Item 360 page (replaces Item query sheet)</td>
+<td>Stores</td>
+<td>M</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>BOM explosion, buildable qty, kit shortage, auto-consume children</td>
+<td>Stores</td>
+<td>H</td>
+<td>M</td>
+<td>2</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>Weight-variance alerts (recorded vs standard)</td>
+<td>Stores / QC</td>
+<td>M</td>
+<td>S</td>
+<td>2</td>
+</tr>
+<tr>
+<td>C6</td>
+<td>Min-stock / reorder alerts for fast movers</td>
+<td>Stores</td>
+<td>M</td>
+<td>S</td>
+<td>2</td>
+</tr>
+<tr>
+<td>C7</td>
+<td>Sample &amp; quarantine tracking with ageing</td>
+<td>Stores / QC</td>
+<td>L</td>
+<td>S</td>
+<td>3</td>
+</tr>
+<tr>
+<td>C8</td>
+<td>Barcode/QR labels + scan-based inward/outward</td>
+<td>Stores</td>
+<td>M</td>
+<td>M</td>
+<td>3</td>
+</tr>
+<tr>
+<td>D1</td>
+<td>Job-work reconciliation per job worker with ageing</td>
+<td>Job work</td>
+<td>H</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>Auto delivery/job challan PDF + ITC-04 data pack</td>
+<td>Compliance</td>
+<td>H</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>Reject-to-vendor → auto debit note</td>
+<td>Purchase / Accounts</td>
+<td>M</td>
+<td>S</td>
+<td>2</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>E-way bill / e-invoice JSON generation (where applicable)</td>
+<td>Compliance</td>
+<td>M</td>
+<td>M</td>
+<td>3</td>
+</tr>
+<tr>
+<td>E1</td>
+<td>Item-code + MPN auto-generator and validator</td>
+<td>Engineering</td>
+<td>M</td>
+<td>S</td>
+<td>0</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>Duplicate / cross-reference detection (OE no., original nos.)</td>
+<td>Engineering</td>
+<td>M</td>
+<td>S</td>
+<td>2</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>HSN → GST auto-fill and check</td>
+<td>Engineering</td>
+<td>M</td>
+<td>S</td>
+<td>0</td>
+</tr>
+<tr>
+<td>E4</td>
+<td>Controlled vocabularies (material, finish, marks, kind)</td>
+<td>Engineering</td>
+<td>M</td>
+<td>S</td>
+<td>0</td>
+</tr>
+<tr>
+<td>E5</td>
+<td>"Contains" text → structured BOM</td>
+<td>Engineering</td>
+<td>M</td>
+<td>S</td>
+<td>1</td>
+</tr>
+<tr>
+<td>E6</td>
+<td>New product → auto-create costing + routing drafts</td>
+<td>Engineering → Costing/PPC</td>
+<td>M</td>
+<td>M</td>
+<td>2</td>
+</tr>
+<tr>
+<td>E7</td>
+<td>Product spec sheet / export catalogue PDF</td>
+<td>Engineering / Sales</td>
+<td>L</td>
+<td>S</td>
+<td>3</td>
+</tr>
+<tr>
+<td>F1</td>
+<td>Costing engine from one routing + rate master</td>
+<td>Costing</td>
+<td>H</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>F2</td>
+<td>True machine-hour rate (labour + depreciation + power + maintenance)</td>
+<td>Costing</td>
+<td>H</td>
+<td>M</td>
+<td>2</td>
+</tr>
+<tr>
+<td>F3</td>
+<td>Margin monitor per order line</td>
+<td>Costing / Sales</td>
+<td>H</td>
+<td>S</td>
+<td>1</td>
+</tr>
+<tr>
+<td>F4</td>
+<td>Price-revision engine (RM change → proposed SP, impact %)</td>
+<td>Costing / Sales</td>
+<td>M</td>
+<td>M</td>
+<td>2</td>
+</tr>
+<tr>
+<td>F5</td>
+<td>RFQ quote generator</td>
+<td>Costing / Sales</td>
+<td>M</td>
+<td>M</td>
+<td>3</td>
+</tr>
+<tr>
+<td>G1</td>
+<td>Real-time breakdown ticket → machine DOWN → reschedule</td>
+<td>Maintenance ↔ PPC</td>
+<td>H</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>G2</td>
+<td>MTTR / MTBF / downtime-cost dashboard</td>
+<td>Maintenance</td>
+<td>M</td>
+<td>S</td>
+<td>1</td>
+</tr>
+<tr>
+<td>G3</td>
+<td>Preventive-maintenance plan + reminders → scheduler windows</td>
+<td>Maintenance ↔ PPC</td>
+<td>H</td>
+<td>M</td>
+<td>2</td>
+</tr>
+<tr>
+<td>G4</td>
+<td>Maintenance spares register + reorder</td>
+<td>Maintenance</td>
+<td>M</td>
+<td>S</td>
+<td>2</td>
+</tr>
+<tr>
+<td>G5</td>
+<td>Warranty / AMC expiry alerts</td>
+<td>Maintenance</td>
+<td>L</td>
+<td>S</td>
+<td>2</td>
+</tr>
+<tr>
+<td>G6</td>
+<td>OEE per machine</td>
+<td>Maintenance / PPC</td>
+<td>M</td>
+<td>M</td>
+<td>3</td>
+</tr>
+<tr>
+<td>H1</td>
+<td>Machine capability matrix (structured operations, eligibility)</td>
+<td>PPC master</td>
+<td>H</td>
+<td>S</td>
+<td>1</td>
+</tr>
+<tr>
+<td>H2</td>
+<td>Asset register validation + depreciation</td>
+<td>Masters</td>
+<td>L</td>
+<td>S</td>
+<td>2</td>
+</tr>
+<tr>
+<td>I1</td>
+<td>Import costing-sheet routings into PPC routings</td>
+<td>PPC</td>
+<td>H</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>I2</td>
+<td>Digital job card / traveller with QR</td>
+<td>PPC / Shop floor</td>
+<td>M</td>
+<td>M</td>
+<td>2</td>
+</tr>
+<tr>
+<td>I3</td>
+<td>In-process QC checklist from gauge/spec + heat-code traceability</td>
+<td>QC</td>
+<td>M</td>
+<td>M</td>
+<td>2</td>
+</tr>
+<tr>
+<td>I4</td>
+<td>Daily shift plan push to supervisors</td>
+<td>PPC</td>
+<td>M</td>
+<td>S</td>
+<td>2</td>
+</tr>
+<tr>
+<td>J1</td>
+<td>Daily MIS digest (email / WhatsApp)</td>
+<td>Reporting</td>
+<td>H</td>
+<td>S</td>
+<td>1</td>
+</tr>
+<tr>
+<td>J2</td>
+<td>Formula-error &amp; data-health watchdog</td>
+<td>Reporting</td>
+<td>M</td>
+<td>S</td>
+<td>0</td>
+</tr>
+<tr>
+<td>J3</td>
+<td>Role-based access + audit trail</td>
+<td>Platform</td>
+<td>M</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>K1</td>
+<td>One-time migration + cleanup of Sheets data</td>
+<td>Enabler</td>
+<td>H</td>
+<td>M</td>
+<td>1</td>
+</tr>
+<tr>
+<td>K2</td>
+<td>Transitional Sheets ↔ app sync</td>
+<td>Enabler</td>
+<td>M</td>
+<td>M</td>
+<td>1</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h3 id="5a-sales-orders-dispatch">5.A Sales orders &amp; dispatch</h3>
+<h4 id="a1-order-release-production-bucket-auto-schedule">A1 · Order release → production bucket → auto-schedule</h4>
+<ul>
+<li><strong>Today:</strong> a "Tick for mfg" checkbox on the ORDERS tab is the only release signal. "Stock/Projected Date" is free text ("IN STOCK", "CASTING ORDERED", "DIE MOVE TO ATAM VALVE").</li>
+<li><strong>Automate:</strong> ticking (or approving) an order line creates a <code>DemandLine</code> → <code>Job</code>s (lots) → <code>JobOp</code>s from the item's routing in Ops Tracker. The scheduler runs and writes back a <strong>computed completion date</strong> per line.</li>
+<li><strong>Value:</strong> answers the client's three dashboard questions (what runs where and when, when do I get item N, when does client C close) directly from real orders.</li>
+<li><strong>Links to:</strong> <code>Project/DemandLine/Job</code> model and scheduling engine in <code>audit-and-backend-plan.md</code> §5–6.</li>
+</ul>
+<h4 id="a2-auto-allocate-dispatches-to-open-po-lines">A2 · Auto-allocate dispatches to open PO lines</h4>
+<ul>
+<li><strong>Today:</strong> outward rows in INV/PUR build the key <code>PO|Mark|Item</code>, but the PO column is blank, so every visible row shows <code>PRICE NOT FOUND</code>. One order line carries up to four invoice refs typed by hand.</li>
+<li><strong>Automate:</strong> when an outward invoice line is saved, allocate the quantity FIFO to the oldest open order line for the same mark + item (with manual override). Price is taken from that line, and balance and dispatch refs update automatically.</li>
+<li><strong>Value:</strong> correct sale value and order balance with no lookup keys to maintain.</li>
+</ul>
+<h4 id="a3-auto-order-status-dispatch-ready-list">A3 · Auto order status + dispatch-ready list</h4>
+<ul>
+<li><strong>Today:</strong> status is typed and goes stale. MW16952 and MW16953 say "IN STOCK" with net stock 5 and 6 against a balance of 200.</li>
+<li><strong>Automate:</strong> derive status from data: <code>Ready to dispatch</code> (free stock ≥ balance), <code>Part-ready (n pcs)</code>, <code>In production (ETA from schedule)</code>, <code>Awaiting casting (PO ref, ETA)</code>, <code>Overdue</code>. Publish a daily <strong>dispatch-ready list</strong> grouped by customer.</li>
+<li><strong>Value:</strong> removes the most error-prone manual column; dispatch planning becomes a filter.</li>
+</ul>
+<h4 id="a4-capable-to-promise-date-on-order-entry">A4 · Capable-to-promise date on order entry</h4>
+<ul>
+<li><strong>Automate:</strong> when a new PO line is entered, insert it as a hypothetical demand, re-run the scheduler, and return the promise date and the delay it causes to existing orders.</li>
+<li><strong>Value:</strong> sales commits dates that production can meet. Uses the CTP technique already planned in §6 of the backend plan.</li>
+</ul>
+<h4 id="a5-order-validation">A5 · Order validation</h4>
+<ul>
+<li><strong>Automate:</strong> HSN → GST rate check (Q9), req date ≥ PO date (Q10), duplicate PO+item detection, quantity &gt; 0, item must exist in product master.</li>
+<li><strong>Value:</strong> stops errors at entry. It can be built as a Google Sheets script immediately (Phase 0).</li>
+</ul>
+<h4 id="a6-fx-rate-fetch-lock-for-export-orders">A6 · FX rate fetch + lock for export orders</h4>
+<ul>
+<li><strong>Today:</strong> columns <code>Currency</code>, <code>FX Rate</code> (88.2163), <code>Lock Date</code> and status "LOCKED FROM LEGACY USD VALUE" are maintained by hand for AMNJ (USA), AMON and AM-AB (Canada).</li>
+<li><strong>Automate:</strong> fetch the daily reference rate (e.g. RBI/FBIL or the CBIC customs notified rate, whichever the client uses) and lock it on PO date or invoice date per policy. Show a realised-vs-booked FX gain/loss report.</li>
+</ul>
+<h4 id="a7-customer-notifications">A7 · Customer notifications</h4>
+<ul>
+<li><strong>Automate:</strong> order acknowledgement with promised date; dispatch notice with invoice no., qty and vehicle; proactive delay alert when the scheduler's ETA passes the req date.</li>
+<li><strong>Channel:</strong> email first; WhatsApp Business API optional.</li>
+</ul>
+<h4 id="a8-short-close-balance-clean-up">A8 · Short-close / balance clean-up</h4>
+<ul>
+<li><strong>Today:</strong> remarks such as "short close this order" and balances of 1–20 pcs left open for months.</li>
+<li><strong>Automate:</strong> suggest short-close when balance ≤ x% or older than n days. Close on approval and log the reason.</li>
+</ul>
+<h4 id="a9-po-intake-from-whatsapp-email-portal">A9 · PO intake from WhatsApp / email / portal</h4>
+<ul>
+<li><strong>Today:</strong> the channel customers use is not visible in the files; every PO line is re-typed into the ORDERS tab by hand, with typos in dates and HSN/GST.</li>
+<li><strong>Automate:</strong> the customer keeps sending the PO the way they do now. A WhatsApp Business API number, a shared orders mailbox and an optional customer portal feed one intake. The system identifies the customer from the sender, reads PDF / Excel / photo / plain text, matches item codes and OE numbers to the product master, and pre-fills a draft order line with a confidence per field. Anything unknown or missing triggers an automatic reply asking for exactly that.</li>
+<li><strong>Human step:</strong> sales confirms or corrects the draft beside the original message; nothing is re-typed from scratch.</li>
+<li><strong>Value:</strong> removes the largest manual data-entry step and the typos Q9 and Q10; first reply to the customer is immediate.</li>
+<li><strong>Needs:</strong> a registered WhatsApp Business number and approval; a dedicated orders mailbox; clean product master (E1–E4).</li>
+</ul>
+<hr />
+<h3 id="5b-purchase-vendors">5.B Purchase &amp; vendors</h3>
+<h4 id="b1-vendor-po-follow-up-escalation-ladder">B1 · Vendor PO follow-up + escalation ladder</h4>
+<ul>
+<li><strong>Today:</strong> delay counters reach 368, 333 and 285 days (AGRIBEST, SS Engg, Fine Auto) with no email sent. Emails go out only on over-receipt.</li>
+<li><strong>Automate:</strong> scheduled reminders: T−3 days before the promised date, on the due date, then weekly. After n reminders, escalate to the purchase head. Each reminder lists only that vendor's open lines. Lines older than n days without activity are proposed for closure.</li>
+<li><strong>Value:</strong> fastest visible win. It can run on their current sheet (Phase 0).</li>
+</ul>
+<h4 id="b2-over-receipt-tolerance-auto-email">B2 · Over-receipt tolerance + auto email</h4>
+<ul>
+<li><strong>Today:</strong> <code>QTY EXCEEDS PO</code> rows (−1, −2, −3, −44) are emailed by hand. VSR shows +5% to +9.5% over-receipts accepted.</li>
+<li><strong>Automate:</strong> a per-vendor or per-material tolerance (e.g. ±5%). Over-tolerance receipts are blocked at GRN or sent for approval, and the vendor is emailed automatically.</li>
+</ul>
+<h4 id="b3-promised-date-capture">B3 · Promised-date capture</h4>
+<ul>
+<li><strong>Today:</strong> "Delay" = today − PO date, so a PO placed yesterday for delivery in 60 days already counts as delayed.</li>
+<li><strong>Automate:</strong> capture the vendor-promised date per line. Delay and on-time % are measured against the promise, and slippage is tracked when a promise is revised.</li>
+</ul>
+<h4 id="b4-vendor-scorecards-all-vendors-monthly-auto-emailed">B4 · Vendor scorecards — all vendors, monthly, auto-emailed</h4>
+<ul>
+<li><strong>Today:</strong> VSR is built per vendor by hand. Its header reads 0.0% on-time while its own panel reads 57.1%, and one "FULFILLED" row has a blank ordered qty.</li>
+<li><strong>Automate:</strong> for every vendor, every month: OTIF %, average/max fulfilment days, over/under-receipt %, <strong>incoming rejection %</strong> (the client already tracks 0.99–1.66% overall), ₹/kg rate trend and open-PO ageing. Send as a PDF to the vendor and internally, and rank vendors per material.</li>
+</ul>
+<h4 id="b5-casting-rm-requirement-planning-mrp-lite">B5 · Casting / RM requirement planning (MRP-lite)</h4>
+<ul>
+<li><strong>Today:</strong> notes such as "CASTING ORDERED", "Casting Order to Vikas metal", "casting need by 25/6/26" and "Check Ingredients".</li>
+<li><strong>Automate:</strong> net requirement = open order balance − free FG stock − WIP − open casting POs, exploded through the BOM. The output is <strong>draft POs grouped by vendor and material</strong> (SG 500/7, CI 25GR, mild steel …) with need-by dates from the production schedule.</li>
+<li><strong>Value:</strong> castings are the long-lead item; this is where delivery dates are won or lost.</li>
+</ul>
+<h4 id="b6-casting-kg-trend-watch">B6 · Casting ₹/kg trend watch</h4>
+<ul>
+<li><strong>Today:</strong> J.k castings moved from ₹72 to ₹88/kg within 2026; KR INDS, Kent Malleables and Bedi Exports each have their own rates.</li>
+<li><strong>Automate:</strong> alert when a new PO rate deviates more than x% from the last rate or the cheapest vendor for the same material. On change, re-run costing (F1) for affected items.</li>
+</ul>
+<h4 id="b7-purchase-approval-workflow">B7 · Purchase approval workflow</h4>
+<ul>
+<li><strong>Today:</strong> "Pls enter the text <em>ok</em> once approved by Purchase/EA" in a sheet column.</li>
+<li><strong>Automate:</strong> approval request with value limits, one-click approve/reject (email, WhatsApp or app) and an audit trail.</li>
+</ul>
+<h4 id="b8-material-ready-date-gates-job-release-in-the-scheduler">B8 · Material-ready date gates job release in the scheduler</h4>
+<ul>
+<li><strong>Automate:</strong> each job's earliest start = casting receipt date (actual, or ETA from B3), so the scheduler never plans machining before material arrives.</li>
+<li><strong>Links to:</strong> <code>releaseAt</code> on <code>Job</code> in the PPC engine.</li>
+</ul>
+<hr />
+<h3 id="5c-stores-inventory">5.C Stores &amp; inventory</h3>
+<h4 id="c1-single-transaction-ledger-with-derived-stock">C1 · Single transaction ledger with derived stock</h4>
+<ul>
+<li><strong>Today:</strong> stock is a formula that floors at 0 (M1464 is really −129, shown 0); carry-forward −21; "Stock carry forward" rows are entered by hand.</li>
+<li><strong>Automate:</strong> one append-only ledger (inward, outward, job out/in, reject, scrap, sample, quarantine, adjustment). Stock is always derived per item, per state and per location. <strong>Negative stock raises an alert</strong> instead of disappearing, and adjustments need a reason and an approver.</li>
+</ul>
+<h4 id="c2-shop-floor-production-booking-fg-stock">C2 · Shop-floor production booking → FG stock</h4>
+<ul>
+<li><strong>Today:</strong> M1751 shows 28,722 pcs outward against 6 pcs inward, and "Production to packing last 60 days = 0". Machined output is never booked.</li>
+<li><strong>Automate:</strong> the operator or supervisor records good/reject quantity per job-op (tablet or QR scan on the job card). The final op books FG automatically and consumes the casting, so stock, WIP and schedule actuals all come from one entry.</li>
+<li><strong>Links to:</strong> <code>ExecutionEvent</code> in the PPC plan, which replaces the fake in-progress fraction.</li>
+</ul>
+<h4 id="c3-item-360-page">C3 · Item 360 page</h4>
+<ul>
+<li><strong>Today:</strong> the Item query sheet (one item at a time, <code>#DIV/0!</code> and <code>#VALUE!</code> errors).</li>
+<li><strong>Automate:</strong> one page per item showing stock by state; open customer orders; open POs; WIP and scheduled completion; inward/outward/reject/scrap for any window; last-n ledger; job-work pending; customer price history (e.g. TMR556WB ₹875 → ₹1,166); vendor rate history; and the BOM tree.</li>
+</ul>
+<h4 id="c4-bom-explosion-buildable-qty-kit-shortage-auto-consume">C4 · BOM explosion, buildable qty, kit shortage, auto-consume</h4>
+<ul>
+<li><strong>Today:</strong> the BOM sheet parses <code>Child*Qty</code> with a formula, and its "Buildable Qty" column is empty. ORDERS shows "Check Ingredients" for assemblies.</li>
+<li><strong>Automate:</strong> buildable qty = min(child stock ÷ qty per parent); show the shortage list per order; dispatching an assembly consumes its children (bolt, washers, nut, bush) automatically.</li>
+</ul>
+<h4 id="c5-weight-variance-alerts">C5 · Weight-variance alerts</h4>
+<ul>
+<li><strong>Today:</strong> "Recorded weight" vs "Avg RM wt" vs "As per wt in product list" (e.g. 29.775 vs 28.96 kg; cast 29.42 vs finished 24.62).</li>
+<li><strong>Automate:</strong> flag castings outside ±x% of standard weight at inward (supports foundry claims, since castings are bought by the kg). Track machining yield (finished ÷ cast) per item.</li>
+</ul>
+<h4 id="c6-min-stock-reorder-alerts">C6 · Min-stock / reorder alerts</h4>
+<ul>
+<li><strong>Automate:</strong> for fast movers (e.g. M1751 at 28,722 pcs outward) and consumables, keep min/max from consumption history and send alerts or draft POs.</li>
+</ul>
+<h4 id="c7-sample-quarantine-tracking">C7 · Sample &amp; quarantine tracking</h4>
+<ul>
+<li><strong>Today:</strong> statuses exist for Org sample in/out, Counter sample in/out and Quarantined, but nothing reports on them.</li>
+<li><strong>Automate:</strong> ageing of open samples and quarantined lots, with reminders to close them.</li>
+</ul>
+<h4 id="c8-barcode-qr-labels-scan-based-transactions">C8 · Barcode / QR labels + scan-based transactions</h4>
+<ul>
+<li><strong>Today:</strong> the product master has <code>Box No.</code> and <code>UPC Code</code> columns, mostly empty.</li>
+<li><strong>Automate:</strong> print box and bin labels; scan to record inward, outward, job challan and production. This removes most typing and the date typos (Q10).</li>
+</ul>
+<hr />
+<h3 id="5d-job-work-gst-compliance">5.D Job work &amp; GST compliance</h3>
+<h4 id="d1-job-work-reconciliation-per-job-worker">D1 · Job-work reconciliation per job worker</h4>
+<ul>
+<li><strong>Today:</strong> M1116 Trunnion Assembly goes out to the shot-blasting vendor in lots of 60–125 and comes back in different lot sizes (260, 302 …). 38.42.150 goes to Rurka Sales Corp. "Net pending with JW" is computed by hand in the item query.</li>
+<li><strong>Automate:</strong> a live <strong>pending-with-job-worker</strong> balance per item and vendor, showing ageing per challan, expected return date and loss/weight variance.</li>
+</ul>
+<h4 id="d2-auto-delivery-job-challan-pdf-itc-04-data-pack">D2 · Auto delivery / job challan PDF + ITC-04 data pack</h4>
+<ul>
+<li><strong>Today:</strong> challans are laid out by hand in a sheet. On the sample (T/26-27/01R) the <strong>party GSTIN and address are blank</strong> even though a party master exists.</li>
+<li><strong>Automate:</strong> generate the challan from the transaction with auto-numbering by series (R = reject, etc.), party details from the master, ₹/kg or ₹/pc valuation, vehicle number and time of removal. Compile <strong>ITC-04</strong> data (job-work goods sent and received) per return period, and alert before the GST deadline for goods to return from job work (1 year for inputs).</li>
+<li><strong>Value:</strong> compliance plus clean paperwork.</li>
+</ul>
+<h4 id="d3-reject-to-vendor-auto-debit-note">D3 · Reject-to-vendor → auto debit note</h4>
+<ul>
+<li><strong>Today:</strong> reject challans to foundries are valued (₹36,301.44 on the sample) but there is no visible link to accounts.</li>
+<li><strong>Automate:</strong> a reject challan creates a debit-note draft against the vendor, links it to the original PO/GRN and feeds the vendor rejection % (B4).</li>
+</ul>
+<h4 id="d4-e-way-bill-e-invoice-json">D4 · E-way bill / e-invoice JSON</h4>
+<ul>
+<li><strong>Automate:</strong> produce portal-ready JSON for e-way bills (job-work movements and consignments above the threshold) and e-invoices (if the client's turnover requires it), so staff upload instead of re-keying.</li>
+</ul>
+<hr />
+<h3 id="5e-product-master-engineering">5.E Product master &amp; engineering</h3>
+<h4 id="e1-item-code-mpn-auto-generator-and-validator">E1 · Item-code + MPN auto-generator and validator</h4>
+<ul>
+<li><strong>Today:</strong> coding rules exist only as notes (<code>X.X.XB</code> = ID.Length.OD for bushes, <code>XXXXY</code> for accessories, <code>JWXXX</code> for in-house job work). The form says "<strong>check last MPN for AM &amp; MNS</strong>", so staff look up the last number by hand.</li>
+<li><strong>Automate:</strong> pick the type and enter dimensions or the parent code, and the code is generated and validated. The next MPN in each mark's series (BFA… for AM, BFM… for MNS) is issued automatically and never reused.</li>
+</ul>
+<h4 id="e2-duplicate-cross-reference-detection">E2 · Duplicate / cross-reference detection</h4>
+<ul>
+<li><strong>Today:</strong> the same part appears under several numbers (e.g. <code>21899326</code> ↔ <code>VO460.326</code>; OE no. vs MPN vs original nos.).</li>
+<li><strong>Automate:</strong> fuzzy and exact match on OE nos., original nos. and MPN at entry, with a cross-reference table so any number finds the part.</li>
+</ul>
+<h4 id="e3-hsn-gst-auto-fill-and-check">E3 · HSN → GST auto-fill and check</h4>
+<ul>
+<li><strong>Today:</strong> 4-digit HSN (<code>7325</code>, <code>8716</code>, <code>8484</code>) next to 8-digit ones; GST 5% on 87089100; 28% vs 18% on the same HSN in ORDERS.</li>
+<li><strong>Automate:</strong> an HSN master with rate and effective date. Entering the HSN fills the GST rate, and a mismatch blocks or warns.</li>
+</ul>
+<h4 id="e4-controlled-vocabularies">E4 · Controlled vocabularies</h4>
+<ul>
+<li><strong>Automate:</strong> dropdowns plus a one-time cleanup for material (<code>SG 500/7</code> / <code>SGI 500/7</code> / <code>SG500/7</code> / <code>SG</code> → one value), finish, marks, party kind (<code>Vendor</code>/<code>vendor</code>/<code>BUYER</code>) and application.</li>
+</ul>
+<h4 id="e5-contains-text-structured-bom">E5 · "Contains" text → structured BOM</h4>
+<ul>
+<li><strong>Today:</strong> <code>Contains</code> is free text (<code>MK17000*1, MTB186*1</code>) parsed by formula.</li>
+<li><strong>Automate:</strong> a BOM editor with item pickers. Existing text is parsed once during migration and validated against the master.</li>
+</ul>
+<h4 id="e6-new-product-auto-create-costing-routing-drafts">E6 · New product → auto-create costing + routing drafts</h4>
+<ul>
+<li><strong>Automate:</strong> saving a new item creates a costing draft (F1) and a routing draft (I1) from a template or a similar existing item. Track "items without routing/cost" as a to-do list.</li>
+</ul>
+<h4 id="e7-product-spec-sheet-export-catalogue-pdf">E7 · Product spec sheet / export catalogue PDF</h4>
+<ul>
+<li><strong>Automate:</strong> a one-click PDF with code, OE/original nos., application, weights, material, finish, HS code, UPC and box no., for export customers (Automann US/Canada) and RFQs.</li>
+</ul>
+<hr />
+<h3 id="5f-costing-pricing">5.F Costing &amp; pricing</h3>
+<h4 id="f1-costing-engine-from-one-routing-rate-master">F1 · Costing engine from one routing + rate master</h4>
+<ul>
+<li><strong>Today:</strong> a copied spreadsheet per item.</li>
+<li>In <code>Cost MV9650.xlsx</code>, <code>H10 = SUM(H3:H7)</code> misses op 4 (drill + tapping, ₹11.43/pc). Total shows <strong>₹54.37; correct ≈ ₹65.80</strong>.</li>
+<li><code>MV9650 Production Plan.xlsx</code> holds the same sheet with <strong>different</strong> formulas and is all <code>#REF!</code>.</li>
+<li>The paint op is costed at the Drill rate.</li>
+<li><strong>Automate:</strong> cost/pc = RM wt × RM ₹/kg (by casting type) + Σ over routing ops (hours ÷ pcs × rate for that machine/skill) + paint (₹/kg × finished wt) + overhead. It is computed from <strong>one</strong> routing and <strong>one</strong> rate table and versioned with an effective date, so every item is recalculated when a rate changes.</li>
+<li><strong>Value:</strong> removes a live costing bug and copy drift; the routing is shared with the scheduler (I1).</li>
+</ul>
+<h4 id="f2-true-machine-hour-rate">F2 · True machine-hour rate</h4>
+<ul>
+<li><strong>Today:</strong> rates come from a skill/machine list (e.g. ₹155.87/h "Drill"). The client's own notes cite machine rates from ₹250 to ₹2,000/h.</li>
+<li><strong>Automate:</strong> rate per machine = operator wage + depreciation (machinery master cost and life) + power + maintenance cost (from the breakdown log; e.g. VMM002 spent ₹28,199 in 3 events) + floor overhead.</li>
+<li><strong>Value:</strong> gives correct costing and the profit objective the scheduler optimises.</li>
+</ul>
+<h4 id="f3-margin-monitor-per-order-line">F3 · Margin monitor per order line</h4>
+<ul>
+<li><strong>Example:</strong> MV9650 sells at ₹80/pc (PO 6131196). At the sheet's cost the margin looks like 32%; at the corrected cost it is about 17.75%.</li>
+<li><strong>Automate:</strong> SP vs current cost on every order line. Lines below the margin threshold are flagged at order entry and in a monthly "loss-makers" list.</li>
+</ul>
+<h4 id="f4-price-revision-engine">F4 · Price-revision engine</h4>
+<ul>
+<li><strong>Today:</strong> the product form has a side calculation of revision impact (qty × old rate vs new rate → 2.81%).</li>
+<li><strong>Automate:</strong> when RM ₹/kg or a machine rate changes, propose a new SP per customer and item, show the ₹ and % impact on the open order book, and generate a price-revision letter.</li>
+</ul>
+<h4 id="f5-rfq-quote-generator">F5 · RFQ quote generator</h4>
+<ul>
+<li><strong>Automate:</strong> for a new enquiry, pick a similar item or enter weight, material and routing to get cost, add the target margin, and produce a quote PDF (INR or USD/CAD with FX from A6).</li>
+</ul>
+<hr />
+<h3 id="5g-maintenance">5.G Maintenance</h3>
+<h4 id="g1-real-time-breakdown-ticket-machine-down-reschedule">G1 · Real-time breakdown ticket → machine DOWN → reschedule</h4>
+<ul>
+<li><strong>Today:</strong> a Google Form filled after repair (DM006 was logged 10.1 days later). Downtime is free text, and planning never learns that a machine is down.</li>
+<li><strong>Evidence:</strong> May–Sep 2026: <strong>19 breakdowns, 446 h wall-clock downtime, ₹79,684 repair cost.</strong> HMC001 lost 98 h, CNC001(jyoti) 90 h over 5 events, VMM002 76 h, VMC001(DMG) 74 h.</li>
+<li><strong>Automate:</strong> a QR sticker on each machine opens a mobile form with the machine pre-filled, and the operator raises the ticket at breakdown time. The machine is marked <strong>DOWN</strong> in Ops Tracker, affected jobs are re-planned to other eligible machines, and the supervisor and maintenance staff are notified. Closing the ticket computes the duration automatically.</li>
+<li><strong>Links to:</strong> <code>MaintenanceWindow</code> / machine status in the PPC model.</li>
+</ul>
+<h4 id="g2-mttr-mtbf-downtime-cost-dashboard">G2 · MTTR / MTBF / downtime-cost dashboard</h4>
+<ul>
+<li><strong>Automate:</strong> per machine and per failure category: count, MTTR, MTBF, cost, and a repeat-failure flag.</li>
+<li><strong>From their data:</strong> MTTR ranges from 2.1 h (CNC02 Ace) to 37 h (VMC001 DMG); HMC001 MTTR is 32.7 h.</li>
+</ul>
+<h4 id="g3-preventive-maintenance-plan-scheduler-windows">G3 · Preventive-maintenance plan → scheduler windows</h4>
+<ul>
+<li><strong>Evidence in remarks:</strong> "check the chain every two months", "clean the water filter from time to time", "machine was not warmed up", "ATC brake worn out, will have to be replaced". <strong>APC battery failures: 4</strong> (CNC001 twice, 4.5 months apart; CNC02; VMM002).</li>
+<li><strong>Automate:</strong> a PM calendar per machine (battery replacement interval, chain tension, coolant filter, grease cartridge, warm-up checklist). Tasks are auto-generated with reminders, and planned PM is injected into the scheduler as a maintenance window so it never collides with committed jobs.</li>
+</ul>
+<h4 id="g4-maintenance-spares-register-reorder">G4 · Maintenance spares register + reorder</h4>
+<ul>
+<li><strong>Evidence:</strong> "Relay is out of stock"; belt GT3 1600 8MGT replaced with GT4 1600 8MGT (spec change to record); the machine master's "Spares to be maintained" column is mostly blank.</li>
+<li><strong>Automate:</strong> critical spares per machine with min stock, consumption logged against tickets, reorder alerts and part-spec history.</li>
+</ul>
+<h4 id="g5-warranty-amc-expiry-alerts">G5 · Warranty / AMC expiry alerts</h4>
+<ul>
+<li><strong>Automate:</strong> from the machine master warranty period (e.g. AD02RD500 12 months from 2026-01-01; HMC002 12 months from 2026-09-01), alert 30 days before expiry and log warranty claims against breakdown tickets.</li>
+</ul>
+<h4 id="g6-oee-per-machine">G6 · OEE per machine</h4>
+<ul>
+<li><strong>Automate:</strong> once C2 (production counts) and G1 (downtime) exist, compute OEE (availability × performance × quality) per machine, shift and item.</li>
+</ul>
+<hr />
+<h3 id="5h-masters-feeding-the-scheduler">5.H Masters feeding the scheduler</h3>
+<h4 id="h1-machine-capability-matrix">H1 · Machine capability matrix</h4>
+<ul>
+<li><strong>Today:</strong> <code>Operations</code> in the machine master is unusable ("Drilling, Turning, Milling" on drills and angle grinders; "Broaching" on an air cooler).</li>
+<li><strong>Automate:</strong> a structured operation picklist per machine type, machine eligibility per routing op, and per-machine cycle-time overrides. The form validates input (Direct Process vs Supporting Equipment; supporting equipment is never schedulable).</li>
+<li><strong>Links to:</strong> <code>RoutingOpRate</code> (machine-dependent processing times), which the scheduler needs.</li>
+</ul>
+<h4 id="h2-asset-register-validation-depreciation">H2 · Asset register validation + depreciation</h4>
+<ul>
+<li><strong>Automate:</strong> validate that production year ≤ installation date, that cost is real (not the <code>1</code> placeholder) and that commissioning date is present. Compute depreciation for F2.</li>
+</ul>
+<hr />
+<h3 id="5i-production-execution-ops-tracker-core">5.I Production execution (Ops Tracker core)</h3>
+<h4 id="i1-import-costing-sheet-routings-into-ppc-routings">I1 · Import costing-sheet routings into PPC routings</h4>
+<ul>
+<li><strong>Key insight:</strong> the client's "MV9650 <strong>Production Plan</strong>" file <em>is</em> the costing sheet. Their routing already lives there: machine type, jig/fixture, gauge/spec, control spec (e.g. "10.50 drill, 113 ±0.5", "M12-1.75 thread"), and output per time (130 pcs / 11 h ≈ 5.1 min/pc).</li>
+<li><strong>Automate:</strong> a bulk importer that turns every costing sheet into <code>Routing</code> → <code>RoutingOp</code> (seq, machine type, setup, cycle min/pc, fixture, inspection spec). Costing (F1) and scheduling then read the same data.</li>
+</ul>
+<h4 id="i2-digital-job-card-traveller-with-qr">I2 · Digital job card / traveller with QR</h4>
+<ul>
+<li><strong>Automate:</strong> an auto-printed card per job showing routing ops, fixture, gauge, control spec, qty and due date, with a QR code used for C2 production booking and I3 QC entry.</li>
+</ul>
+<h4 id="i3-in-process-qc-checklist-heat-code-traceability">I3 · In-process QC checklist + heat-code traceability</h4>
+<ul>
+<li><strong>Evidence:</strong> gauge and spec columns in the costing sheets; "Heat code is must" on casting POs.</li>
+<li><strong>Automate:</strong> a QC checklist per op generated from the routing spec, with pass/fail and readings captured. The casting heat number is recorded at GRN and carried through the job, FG lot and invoice, so a customer complaint traces back to the foundry heat.</li>
+</ul>
+<h4 id="i4-daily-shift-plan-push">I4 · Daily shift plan push</h4>
+<ul>
+<li><strong>Automate:</strong> each morning, every supervisor gets their machines' job list (from the latest plan) on WhatsApp or email, with changes since yesterday highlighted.</li>
+</ul>
+<hr />
+<h3 id="5j-reporting-control-platform">5.J Reporting, control &amp; platform</h3>
+<h4 id="j1-daily-mis-digest">J1 · Daily MIS digest</h4>
+<ul>
+<li><strong>Automate:</strong> one daily message to management covering overdue customer lines, dispatch-ready value, POs past promise, machines down, rejections/scrap yesterday, negative-stock items and low-margin orders.</li>
+</ul>
+<h4 id="j2-formula-error-data-health-watchdog">J2 · Formula-error &amp; data-health watchdog</h4>
+<ul>
+<li><strong>Automate:</strong> a nightly scan for <code>#VALUE!</code>, <code>#DIV/0!</code>, <code>#REF!</code> and <code>#ERROR!</code>, impossible dates, blank mandatory fields and HSN/GST mismatches, posted as a fix-list. Phase 0 runs it on their current sheets; later it covers the app's data.</li>
+</ul>
+<h4 id="j3-role-based-access-audit-trail">J3 · Role-based access + audit trail</h4>
+<ul>
+<li><strong>Today:</strong> tabs are locked per user, data is entered by named clerks, and approvals are typed text.</li>
+<li><strong>Automate:</strong> roles (sales, purchase, stores, production, maintenance, accounts, management) with field-level permissions and a full change log.</li>
+</ul>
+<hr />
+<h3 id="5k-enablers">5.K Enablers</h3>
+<h4 id="k1-one-time-migration-cleanup">K1 · One-time migration + cleanup</h4>
+<ul>
+<li><strong>Automate:</strong> scripts that import ~8,000 ledger rows (since 2018), the product master, party master, BOMs, open orders, open POs and the machine master. The import fixes Q1–Q17 (normalise vocabularies, split <code>Contains</code>, repair dates, flag negatives) and produces a <strong>data-health report</strong> for the client to sign off.</li>
+</ul>
+<h4 id="k2-transitional-sheets-app-sync">K2 · Transitional Sheets ↔ app sync</h4>
+<ul>
+<li><strong>Automate:</strong> during cut-over, staff keep entering in familiar sheets while a sync job pushes to the app (and pulls computed fields such as status and ETA back). This lowers adoption risk.</li>
+</ul>
+<hr />
+<h2 id="6-product-features-beyond-automation">6. Product features beyond automation</h2>
+<p>Things people open and use (views, registers, portals, tools), as opposed to background automations. Each one answers a gap visible in the client's files. Items marked <em>(inferred)</em> come from hints in the costing sheets and need client confirmation before pricing.</p>
+<h3 id="6a-visibility-dashboards-and-views">6.A Visibility: dashboards and views</h3>
+<ul>
+<li><strong>Owner dashboard</strong> — open order value by customer, overdue lines, dispatch-ready value, machines down. <em>Today:</em> management asks by phone and reads sheets; status is typed text.</li>
+<li><strong>Order book with ageing</strong> — by customer, due week and balance, with a promise-date calendar. <em>Today:</em> small balances stay open for months.</li>
+<li><strong>Machine timeline and load heatmap</strong> — what runs where and when, and utilisation per machine. This is the client's own "which machine is producing what and when" question.</li>
+<li><strong>Item 360 page</strong> — stock by state, open orders and POs, WIP, price history, BOM tree. Replaces the Item query sheet, which is full of <code>#DIV/0!</code>.</li>
+<li><strong>Order-to-cash trace</strong> — click an order to see its castings, jobs, dispatches and invoices. Today nothing links PO, casting, machine and invoice.</li>
+</ul>
+<h3 id="6b-planning-tools">6.B Planning tools</h3>
+<ul>
+<li><strong>What-if simulator</strong> — add a rush order, drop a machine or move a casting date, and compare the new plan with the current one.</li>
+<li><strong>Capacity view</strong> — hours needed against hours available per machine type per week, bottleneck highlighted; useful when quoting.</li>
+<li><strong>Machine preference table</strong> — one item on different machines: time, cost and margin side by side. The client sketched exactly this in their handwritten notes.</li>
+<li><strong>Shift and holiday calendar</strong> with shift handover notes.</li>
+<li><strong>Operator skills matrix</strong> <em>(inferred)</em> — costing sheets already price labour by skill (drill, tapping, CNC programmer, VMC operator).</li>
+</ul>
+<h3 id="6c-costing-and-pricing-workbench">6.C Costing and pricing workbench</h3>
+<ul>
+<li><strong>Cost builder per item</strong> — routing steps, machine and skill rates, paint and overhead, shown as a breakdown chart; one source instead of copied sheets.</li>
+<li><strong>Rate master editor</strong> with effective dates and change history (today's rate list has item codes mixed in).</li>
+<li><strong>Margin explorer</strong> by customer, item or order, with a loss-makers view.</li>
+<li><strong>Price history charts</strong> per item (TMR556WB went from ₹875 to ₹1,166 across POs).</li>
+<li><strong>Quote builder</strong> producing a PDF quote, with a currency option for export customers.</li>
+</ul>
+<h3 id="6d-customer-and-vendor-portals">6.D Customer and vendor portals</h3>
+<ul>
+<li><strong>Customer portal</strong> — order status, dispatch notices, invoice downloads and PO upload (the front end for A9).</li>
+<li><strong>Vendor portal</strong> — open POs, promised-date entry, challan and heat-certificate upload, and the vendor's own scorecard.</li>
+</ul>
+<h3 id="6e-product-master-and-documents">6.E Product master and documents</h3>
+<ul>
+<li><strong>Catalogue search</strong> across OE number, MPN, original numbers and customer mark.</li>
+<li><strong>Attachments</strong> on items, POs and vendors: drawings, PO PDFs, test certificates, challans.</li>
+<li><strong>Drawing revision history</strong> <em>(inferred)</em> — which revision was used for which lot.</li>
+<li><strong>Where-used and where-from search</strong> — from any finished lot to its casting and heat number, or from a complaint to its source.</li>
+<li><strong>Tooling register for jigs, fixtures and gauges</strong> <em>(inferred)</em> — costing sheets name a jig and a gauge per operation, but nothing tracks them or their calibration dates.</li>
+<li><strong>Sample register</strong> — original and counter samples in and out, with ageing.</li>
+</ul>
+<h3 id="6f-quality">6.F Quality</h3>
+<ul>
+<li><strong>Non-conformance register and corrective-action tracking</strong> for rejects, scrap and customer complaints.</li>
+<li><strong>Rejection Pareto charts</strong> by foundry, defect and item (about 1% incoming rejection today).</li>
+<li><strong>Inspection record viewer</strong> against each operation's gauge and spec.</li>
+</ul>
+<h3 id="6g-maintenance-and-assets">6.G Maintenance and assets</h3>
+<ul>
+<li><strong>Machine page</strong> — specs, warranty, spares, full breakdown history and cost.</li>
+<li><strong>Downtime Pareto and repeat-failure view</strong> (HMC001 lost 98 h; APC battery failed 4 times).</li>
+<li><strong>Spares inventory and AMC / warranty calendar</strong> — minimum stock levels per machine; warranty and AMC expiry dates.</li>
+</ul>
+<h3 id="6h-compliance-and-finance-views">6.H Compliance and finance views</h3>
+<ul>
+<li><strong>Job-work register</strong> — pending with each job worker, age, and a one-year return tracker.</li>
+<li><strong>GST views</strong> — HSN-to-rate checks, ITC-04 pack, e-way bill list.</li>
+<li><strong>Reports library</strong> — vendor scorecard, customer statement, stock valuation, ageing, profit by order.</li>
+<li><strong>FX view</strong> for export orders: booked against realised rate.</li>
+</ul>
+<h3 id="6i-everyday-usability">6.I Everyday usability</h3>
+<ul>
+<li><strong>Roles and an approvals inbox</strong> — POs, low-margin orders, short-closes, stock adjustments.</li>
+<li><strong>Notification centre and @mention comments</strong> — on orders and POs.</li>
+<li><strong>Excel-style grid editing</strong> — bulk edit and an import wizard, since staff are used to sheets.</li>
+<li><strong>Search and shortcuts</strong> — saved filters, one-click Excel/PDF export.</li>
+<li><strong>Print layouts</strong> — challan, job card, box and bin labels, invoice.</li>
+<li><strong>Shop-floor tablet mode</strong> — large buttons, one screen per machine.</li>
+<li><strong>Data-health page</strong> — lists errors and blanks for someone to fix.</li>
+</ul>
+<h3 id="suggested-pitch-order">Suggested pitch order</h3>
+<ol>
+<li>Owner dashboard with order book and machine timeline (answers the client's own three questions).</li>
+<li>Item 360 plus catalogue search (fixes daily pain, easy to demo).</li>
+<li>Costing workbench with margin explorer (backed by the SUM-bug finding).</li>
+<li>Customer and vendor portals (visible and differentiating).</li>
+<li>Quality register and tooling/gauge register (neither exists today).</li>
+</ol>
+<hr />
+<h2 id="7-suggested-roadmap">7. Suggested roadmap</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Scope</th>
+<th>Why this order</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0 — Quick wins on current Google Sheets (1–2 weeks)</strong></td>
+<td>B1 vendor reminders · B2 over-receipt emails · A5 order validation · E1 code/MPN generator · E3 HSN→GST check · E4 dropdown cleanup · J2 error watchdog · <strong>fix the MV9650 SUM bug now</strong></td>
+<td>Builds trust immediately; no migration needed; Apps Script on the existing workbook</td>
+</tr>
+<tr>
+<td><strong>1 — Ops Tracker core + data foundation</strong></td>
+<td>K1/K2 migration · H1 capability matrix · I1 routing import · A1 order → schedule · A2/A3 allocation &amp; status · A9 PO intake · C1/C2 ledger + production booking · C3 item 360 · D1/D2 job work + challan · F1/F3 costing + margin · G1/G2 breakdown → reschedule · B3/B4/B7 · J1/J3</td>
+<td>Gives the scheduler real inputs (orders, routings, machines, downtime) and real outputs (status, ETA)</td>
+</tr>
+<tr>
+<td><strong>2 — Planning depth</strong></td>
+<td>B5 MRP-lite · B6 rate watch · B8 material gating · A4 CTP · A6/A7/A8 · C4/C5/C6 · D3 · E2/E5/E6 · F2/F4 · G3/G4/G5 · I2/I3/I4</td>
+<td>Needs Phase 1 data to be clean and flowing</td>
+</tr>
+<tr>
+<td><strong>3 — Polish &amp; scale</strong></td>
+<td>C7/C8 scanning · D4 e-way/e-invoice · E7 catalogue · F5 quotes · G6 OEE</td>
+<td>High convenience, lower urgency</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="8-mapping-to-the-ops-tracker-domain-model">8. Mapping to the Ops Tracker domain model</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Client artefact</th>
+<th>Ops Tracker entity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ORDERS line (PO, item, qty, req date, SP)</td>
+<td><code>Project</code> (customer) → <code>DemandLine</code></td>
+</tr>
+<tr>
+<td>"Tick for mfg"</td>
+<td><code>DemandLine</code> release → <code>Job</code> creation (A1)</td>
+</tr>
+<tr>
+<td>Costing sheet op rows (machine, jig, gauge, pcs/hours)</td>
+<td><code>Routing</code> → <code>RoutingOp</code> (+ <code>RoutingOpRate</code>) (I1)</td>
+</tr>
+<tr>
+<td>Machinery master (Direct Process rows)</td>
+<td><code>MachineType</code> → <code>Machine</code> (H1)</td>
+</tr>
+<tr>
+<td>Labour/machine rate list</td>
+<td><code>Machine.hourlyRate</code> (F2)</td>
+</tr>
+<tr>
+<td>Breakdown report</td>
+<td><code>MaintenanceWindow</code> + machine status (G1)</td>
+</tr>
+<tr>
+<td>PM remarks</td>
+<td>planned <code>MaintenanceWindow</code> (G3)</td>
+</tr>
+<tr>
+<td>Casting PO receipt / ETA</td>
+<td><code>Job.releaseAt</code> (B8)</td>
+</tr>
+<tr>
+<td>Production quantities (missing today)</td>
+<td><code>ExecutionEvent</code> (C2)</td>
+</tr>
+<tr>
+<td>Party master</td>
+<td><code>Client</code> / <code>Vendor</code></td>
+</tr>
+<tr>
+<td>Product master + BOM</td>
+<td><code>Item</code> + <code>BomLine</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>The scheduler planned in <code>audit-and-backend-plan.md</code> assumes six abstract machine types (M1–M6). The real shop has <strong>Lathe ×8, Drill ×7, CNC Turning ×2, VMC ×2, HMC ×2, 5-Axis ×1, VMM ×2, VTL ×1</strong>, plus grinders, a paint section and tapping. Seed data and the capability matrix should use these.</p>
+<hr />
+<h2 id="9-open-questions-for-the-client">9. Open questions for the client</h2>
+<ol>
+<li>What does <strong>COP</strong> stand for in <code>COP PRICE KEY</code> / <code>COP HISTORY</code> (customer order price, cost of production …)? Which one should drive sale value?</li>
+<li>Can we get access to the central rate sheet referenced by <code>IMPORTRANGE</code> (labour/machine rates, casting ₹/kg, paint, overhead)?</li>
+<li>Which costing is authoritative for MV9650: the "Cost" file or the "Production Plan" file? Should the paint and overhead ×2 factor apply?</li>
+<li>Over-receipt tolerance policy per material/vendor (B2)?</li>
+<li>Turnover band, for the e-invoice and ITC-04 frequency (D2/D4)? Which FX rate source and lock rule do they use for export POs (A6)?</li>
+<li>Who books production completion today, if anyone (C2)? Is a tablet or QR at the machine acceptable?</li>
+<li>Preferred alert channel: email, WhatsApp, or both?</li>
+<li>Can staff keep using sheets during transition (K2), or is a hard cut-over preferred?</li>
+</ol>
+</main></div>
+</body></html>
