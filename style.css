@@ -243,3 +243,7 @@ body { -webkit-user-select: none; user-select: none; }
 #view { touch-action: none; }
 #panel, #panel * { -webkit-user-select: text; user-select: text; }
 #panel button, #panel .chip-l { -webkit-user-select: none; user-select: none; }
+
+/* backdrop must not swallow clicks meant for arrows */
+#nodes { pointer-events: none; }
+#nodes .node { pointer-events: auto; }

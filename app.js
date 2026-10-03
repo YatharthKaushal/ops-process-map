@@ -223,7 +223,6 @@
     if (e.button !== 0) return;
     e.preventDefault();
     drag = { x: e.clientX, y: e.clientY, tx: T.x, ty: T.y }; moved = false;
-    try { view.setPointerCapture(e.pointerId); } catch (x) {}
   });
   view.addEventListener('dragstart', function (e) { e.preventDefault(); });
   document.addEventListener('selectstart', function (e) { if (drag || !e.target.closest || !e.target.closest('#panel')) e.preventDefault(); });
